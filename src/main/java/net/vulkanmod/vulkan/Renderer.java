@@ -282,13 +282,13 @@ public class Renderer {
             int vkResult = vkAcquireNextImageKHR(device, swapChain.getId(), VUtil.UINT64_MAX,
                                                  imageAvailableSemaphores.get(currentFrame), VK_NULL_HANDLE, pImageIndex);
 
-            if (vkResult == VK_SUBOPTIMAL_KHR || vkResult == VK_ERROR_OUT_OF_DATE_KHR || swapChainUpdate) {
+            if (swapChain.isActuallySuboptimal(vkResult) || vkResult == VK_ERROR_OUT_OF_DATE_KHR || swapChainUpdate) {
                 swapChainUpdate = true;
                 skipRendering = true;
                 this.beginFrame();
 
                 return;
-            } else if (vkResult != VK_SUCCESS) {
+            } else if (vkResult != VK_SUCCESS && vkResult != VK_SUBOPTIMAL_KHR) {
                 throw new RuntimeException("Cannot acquire next swap chain image: %s".formatted(VkResult.decode(vkResult)));
             }
 
@@ -388,10 +388,10 @@ public class Renderer {
 
             vkResult = vkQueuePresentKHR(DeviceManager.getPresentQueue().vkQueue(), presentInfo);
 
-            if (vkResult == VK_ERROR_OUT_OF_DATE_KHR || vkResult == VK_SUBOPTIMAL_KHR || swapChainUpdate) {
+            if (vkResult == VK_ERROR_OUT_OF_DATE_KHR || swapChain.isActuallySuboptimal(vkResult) || swapChainUpdate) {
                 swapChainUpdate = true;
                 return;
-            } else if (vkResult != VK_SUCCESS) {
+            } else if (vkResult != VK_SUCCESS && vkResult != VK_SUBOPTIMAL_KHR) {
                 throw new RuntimeException("Failed to present rendered frame: %s".formatted(VkResult.decode(vkResult)));
             }
 
