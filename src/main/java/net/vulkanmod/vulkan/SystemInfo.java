@@ -15,12 +15,17 @@ public class SystemInfo {
 
     static {
         CentralProcessor centralProcessor = null;
-        // Opening F3 crashes the game on one specific platform
-        try {
-            centralProcessor = new oshi.SystemInfo().getHardware().getProcessor();
-        } catch (NoClassDefFoundError e){
-            Initializer.LOGGER.warn("Failed to initialize OSHI class!");
+        // Disabling OSHI is a bit useful on Asahi because it returns an invalid cpu string for some reason
+        if(!Boolean.parseBoolean(System.getProperty("net.vulkanmod.skip-oshi"))) {
+            // Opening F3 crashes the game on one specific platform because OSHI class fails to initialize
+            // I don't want to fix OSHI for now, so let's just handle error instead of crashing
+            try {
+                centralProcessor = new oshi.SystemInfo().getHardware().getProcessor();
+            } catch (NoClassDefFoundError e) {
+                Initializer.LOGGER.warn("Failed to initialize OSHI class!");
+            }
         }
+        // TODO: Add more platform support?
         cpuInfo = centralProcessor != null ?
                 String.format("%s", centralProcessor.getProcessorIdentifier().getName()).replaceAll("\\s+", " ") :
                 getCpuInfoLinux();
